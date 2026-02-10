@@ -3,204 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoMail Studio</title>
+    <title>AutoMail Studio | Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.bubble.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;600&display=swap');
-        body { font-family: 'Outfit', sans-serif; background: #050505; color: #ececec; }
-        .glass-panel { background: rgba(15, 15, 15, 0.6); border: 1px solid #1a1a1a; border-radius: 12px; }
-        .input-underlined { background: transparent; border-bottom: 1px solid #222; outline: none; transition: 0.4s; }
-        .input-underlined:focus { border-color: #555; }
-        #editor { min-height: 200px; border-radius: 8px; background: #0a0a0a; border: 1px solid #151515; color: #fff; }
-        .mapping-select { background: #111; border: 1px solid #222; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #888; }
-        ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-thumb { background: #222; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #000; color: #a1a1aa; scroll-behavior: smooth; }
+        .setup-card { background: #09090b; border: 1px solid #18181b; padding: 30px; border-radius: 12px; margin-bottom: 30px; }
+        .guide-img { width: 100%; border-radius: 6px; border: 1px solid #27272a; margin-top: 15px; }
+        .info-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 16px; height: 16px; border-radius: 50%; border: 1px solid #3f3f46;
+            font-size: 10px; cursor: help; margin-left: 6px; color: #52525b; position: relative;
+        }
+        .info-icon:hover::after {
+            content: attr(data-tip); position: absolute; background: #18181b; color: #fff;
+            padding: 10px; border-radius: 6px; width: 200px; font-size: 11px; z-index: 100;
+            border: 1px solid #27272a; bottom: 25px; left: 0; text-transform: none;
+        }
+        .input-minimal { background: transparent; border-bottom: 1px solid #18181b; outline: none; color: white; transition: 0.3s; }
+        .input-minimal:focus { border-color: #fff; }
+        #editor { min-height: 200px; border-radius: 8px; background: #050505; border: 1px solid #18181b; color: #fff; }
+        .tag-btn { font-size: 9px; text-transform: uppercase; padding: 4px 10px; border: 1px solid #27272a; border-radius: 4px; cursor: pointer; }
+        .tag-btn:hover { border-color: #fff; color: #fff; }
     </style>
 </head>
 <body class="p-6 md:p-12">
 
-    <div id="login-wall" class="fixed inset-0 z-50 flex items-center justify-center bg-black">
-        <button onclick="handleAuthClick()" class="tracking-[0.4em] text-[10px] uppercase border border-zinc-800 px-10 py-4 hover:bg-white hover:text-black transition duration-700">
-            Azonosítás indítása
-        </button>
+    <nav class="flex justify-between items-center mb-16 border-b border-zinc-900 pb-6 max-w-7xl mx-auto">
+        <h1 class="text-white text-xs tracking-[0.4em] uppercase font-bold">AutoMail <span class="text-zinc-600">Studio</span></h1>
+        <div class="flex gap-6 text-[10px] uppercase tracking-widest">
+            <a href="#setup-guide" class="hover:text-white transition">Segítség</a>
+            <a href="#main-ui" class="text-white border-b border-white">Vezérlőpult</a>
+        </div>
+    </nav>
+
+    <div id="setup-guide" class="max-w-4xl mx-auto py-10">
+        <h2 class="text-2xl text-white font-light mb-10">Beállítási Útmutató</h2>
+        
+        <div class="setup-card">
+            <span class="text-xs text-zinc-700 uppercase font-bold">Lépés 01</span>
+            <h3 class="text-white mt-2">Táblázat & Apps Script</h3>
+            <p class="text-sm mt-2">A Google Táblázatban menjen a <b>Bővítmények -> Apps Script</b> menüpontba.</p>
+            <img src="kep3.png" class="guide-img">
+        </div>
+
+        <div class="setup-card">
+            <span class="text-xs text-zinc-700 uppercase font-bold">Lépés 02</span>
+            <h3 class="text-white mt-2">Kód beillesztése</h3>
+            <p class="text-sm mt-2">Másolja be az oldal alján található Apps Script kódot, majd nyomja meg a Mentés (lemez ikon) gombot.</p>
+            <img src="kep4.png" class="guide-img">
+        </div>
+
+        <div class="setup-card">
+            <span class="text-xs text-zinc-700 uppercase font-bold">Lépés 03</span>
+            <h3 class="text-white mt-2">Közzététel</h3>
+            <p class="text-sm mt-2"><b>Deploy -> New Deployment</b>. Típus: Web App. Hozzáférés: <b>Anyone</b>. A kapott URL-t másolja be alább.</p>
+            <input type="text" id="script_url_input" placeholder="https://script.google.com/..." class="input-minimal w-full py-3 mt-4 text-xs">
+            <img src="kep5.png" class="guide-img">
+        </div>
     </div>
 
-    <div id="main-ui" class="hidden max-w-7xl mx-auto">
-        
-        <header class="flex justify-between items-baseline mb-16 border-b border-zinc-900 pb-8">
-            <h1 class="text-lg font-light tracking-tighter">AutoMail <span class="text-zinc-600 font-extralight">/ Studio v3</span></h1>
-            <div id="statusInfo" class="text-[9px] uppercase tracking-[0.3em] text-zinc-500 italic">Készenlétben</div>
-        </header>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
+    <div id="main-ui" class="max-w-7xl mx-auto py-20 border-t border-zinc-900">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-20">
             
-            <div class="lg:col-span-5 space-y-16">
-                
+            <div class="space-y-12">
                 <section>
-                    <p class="text-[10px] uppercase tracking-widest text-zinc-600 mb-6">01. Adatforrás párosítása</p>
-                    <div class="space-y-6">
-                        <button onclick="pickSpreadsheet()" class="text-xs border border-zinc-800 px-4 py-2 hover:border-zinc-400 transition">
-                            Táblázat kiválasztása
-                        </button>
-                        
-                        <div id="mapping-area" class="hidden glass-panel p-6 space-y-4 animate-pulse">
-                            <div class="flex justify-between items-center">
-                                <span class="text-[10px] text-zinc-500 uppercase">Címzett Email</span>
-                                <select id="emailCol" class="mapping-select"></select>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-[10px] text-zinc-500 uppercase">Ügyfél Neve</span>
-                                <select id="nameCol" class="mapping-select"></select>
-                            </div>
+                    <div class="flex items-center mb-6">
+                        <span class="text-[10px] uppercase tracking-widest">01 / Adatforrás</span>
+                        <span class="info-icon" data-tip="Válassza ki a táblázatot. A rendszer betölti az oszlopokat és a korábbi mentéseket.">i</span>
+                    </div>
+                    <button onclick="pickSpreadsheet()" class="text-[10px] uppercase border border-zinc-800 px-6 py-3 hover:bg-white hover:text-black transition">Táblázat kiválasztása</button>
+                    
+                    <div id="mapping-box" class="hidden mt-8 p-6 bg-zinc-950 border border-zinc-900 rounded-lg space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs uppercase">Email oszlop:</span>
+                            <select id="emailCol" class="bg-black text-white text-xs border border-zinc-800 p-1"></select>
+                        </div>
+                        <div class="pt-4">
+                            <span class="text-[9px] uppercase text-zinc-600 block mb-3 tracking-widest">Beszúrható mezők:</span>
+                            <div id="dynamic-tags" class="flex flex-wrap gap-2"></div>
                         </div>
                     </div>
                 </section>
 
                 <section class="space-y-6">
-                    <p class="text-[10px] uppercase tracking-widest text-zinc-600 mb-6">02. Üzenet felépítése</p>
-                    <input type="text" id="subject" placeholder="Email tárgya" class="input-underlined w-full py-2 text-sm font-light">
-                    
-                    <div class="flex gap-4">
-                        <button onclick="insertVar('{{Nev}}')" class="text-[9px] text-zinc-500 hover:text-zinc-200 uppercase tracking-widest">[+] Név</button>
-                        <button onclick="pickFile()" class="text-[9px] text-zinc-500 hover:text-zinc-200 uppercase tracking-widest">[+] Fájl</button>
+                    <div class="flex items-center">
+                        <span class="text-[10px] uppercase tracking-widest">02 / Tartalom</span>
+                        <span class="info-icon" data-tip="A tárgyban és a törzsben is használhatja a {{Mező}} formátumot.">i</span>
                     </div>
-
+                    <input type="text" id="subject" placeholder="Email tárgya" class="input-minimal w-full py-2">
                     <div id="editor"></div>
+                    <div class="flex justify-between">
+                        <button onclick="pickFile()" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition">[+] Fájl csatolása</button>
+                        <input type="color" id="bgColor" value="#ffffff" class="w-4 h-4 bg-transparent border-none cursor-pointer">
+                    </div>
                 </section>
 
-                <button onclick="saveEverything()" id="deployBtn" class="w-full bg-zinc-900 border border-zinc-800 py-5 text-[10px] uppercase tracking-[0.5em] hover:bg-white hover:text-black transition-all duration-500">
-                    Konfiguráció Élesítése & Trigger
-                </button>
-            </div>
-
-            <div class="lg:col-span-7">
-                <div class="sticky top-12">
-                    <div id="previewWrap" class="border border-zinc-900 p-12 min-h-[600px] flex items-center justify-center transition-all duration-1000">
-                        <div class="bg-white p-10 w-full max-w-lg shadow-2xl">
-                            <h2 id="prevSub" class="text-xl font-semibold text-black mb-6 border-b border-zinc-100 pb-4"></h2>
-                            <div id="prevBody" class="text-sm leading-relaxed text-zinc-700"></div>
-                        </div>
-                    </div>
-                    <div class="mt-4 flex justify-end gap-2">
-                        <input type="color" id="bgColor" value="#050505" class="w-4 h-4 bg-transparent border-none cursor-pointer opacity-20">
-                    </div>
+                <div class="pt-8 space-y-4">
+                    <button onclick="saveEverything()" class="w-full bg-white text-black py-4 text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-zinc-200 transition">Élesítés & Trigger indítása</button>
+                    <button onclick="sendTest()" class="w-full border border-zinc-900 py-3 text-[9px] uppercase tracking-[0.2em] hover:text-white transition">Teszt email küldése saját címre</button>
                 </div>
             </div>
 
+            <div>
+                <div class="sticky top-10">
+                    <p class="text-[10px] uppercase tracking-[0.3em] mb-10 text-center opacity-30 italic">Élő előnézet</p>
+                    <div id="previewWrap" class="border border-zinc-900 p-10 min-h-[500px] flex items-center justify-center transition-all duration-700">
+                        <div class="bg-white p-10 w-full shadow-2xl">
+                            <h2 id="prevSub" class="text-xl font-bold text-black mb-6 border-b pb-4"></h2>
+                            <div id="prevBody" class="text-sm leading-relaxed text-zinc-700"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const CONFIG = {
-            CLIENT_ID: '721143767176-gdlp76cpchpaka591l8h2avivk8aabq5.apps.googleusercontent.com',
-            API_KEY: 'AIzaSyAN6a6dw4x4dQW4e3batn43ds33KxqQkuc',
-            WEB_APP_URL: 'A_TE_APPS_SCRIPT_URL_ED'
-        };
+        const CLIENT_ID = '721143767176-gdlp76cpchpaka591l8h2avivk8aabq5.apps.googleusercontent.com';
+        const API_KEY = 'AIzaSyAN6a6dw4x4dQW4e3batn43ds33KxqQkuc';
 
-        let accessToken = null, selectedFileId = null, targetSheetId = null;
-        const quill = new Quill('#editor', { theme: 'bubble', placeholder: 'Ide írja az üzenet törzsét...' });
+        let accessToken = null, targetSheetId = null, selectedFileId = null, columnHeaders = [];
+        const quill = new Quill('#editor', { theme: 'bubble', placeholder: 'Email üzenet...' });
 
-        // LIVE PREVIEW UPDATES
-        const update = () => {
-            document.getElementById('prevSub').innerText = document.getElementById('subject').value || "Példa Tárgy";
-            document.getElementById('prevBody').innerHTML = quill.root.innerHTML || "Üzenet helye...";
+        const updatePreview = () => {
+            let s = document.getElementById('subject').value;
+            let b = quill.root.innerHTML;
+            columnHeaders.forEach(h => {
+                const r = new RegExp(`\\{\\{${h}\\}\\}`, 'g');
+                s = s.replace(r, `<span class="text-blue-600">[${h}]</span>`);
+                b = b.replace(r, `<span class="bg-zinc-100 px-1 border border-zinc-200">${h}</span>`);
+            });
+            document.getElementById('prevSub').innerHTML = s || "Tárgy";
+            document.getElementById('prevBody').innerHTML = b;
             document.getElementById('previewWrap').style.backgroundColor = document.getElementById('bgColor').value;
         };
-        quill.on('text-change', update);
-        document.getElementById('subject').oninput = update;
-        document.getElementById('bgColor').oninput = update;
 
-        function handleAuthClick() {
-            const client = google.accounts.oauth2.initTokenClient({
-                client_id: CONFIG.CLIENT_ID,
-                scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
-                callback: (resp) => {
-                    accessToken = resp.access_token;
-                    document.getElementById('login-wall').style.display = 'none';
-                    document.getElementById('main-ui').classList.remove('hidden');
-                },
-            });
-            client.requestAccessToken();
+        quill.on('text-change', updatePreview);
+        document.getElementById('subject').oninput = updatePreview;
+        document.getElementById('bgColor').oninput = updatePreview;
+
+        function checkAuth() {
+            if (!accessToken) {
+                google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly',
+                    callback: (resp) => { accessToken = resp.access_token; }
+                }).requestAccessToken();
+            }
         }
 
-        // TÁBLÁZAT ÉS OSZLOP LEKÉRÉS
         function pickSpreadsheet() {
+            if (!accessToken) return checkAuth();
             gapi.load('picker', () => {
-                const picker = new google.picker.PickerBuilder()
-                    .addView(new google.picker.DocsView().setMimeTypes('application/vnd.google-apps.spreadsheet'))
-                    .setOAuthToken(accessToken).setDeveloperKey(CONFIG.API_KEY)
-                    .setCallback(async (data) => {
-                        if (data.action === google.picker.Action.PICKED) {
-                            targetSheetId = data.docs[0].id;
-                            document.getElementById('statusInfo').innerText = "Forrás: " + data.docs[0].name;
-                            await fetchHeaders(targetSheetId);
-                        }
-                    }).build();
-                picker.setVisible(true);
+                new google.picker.PickerBuilder().addView(new google.picker.DocsView().setMimeTypes('application/vnd.google-apps.spreadsheet'))
+                .setOAuthToken(accessToken).setDeveloperKey(API_KEY)
+                .setCallback(async (data) => {
+                    if (data.action === google.picker.Action.PICKED) {
+                        targetSheetId = data.docs[0].id;
+                        await loadProject(targetSheetId);
+                    }
+                }).build().setVisible(true);
             });
         }
 
-        async function fetchHeaders(id) {
-            const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}/values/A1:Z1`, {
+        async function loadProject(id) {
+            const resp = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}/values/A1:Z1`, {
                 headers: { 'Authorization': `Bearer ${accessToken}` }
             });
-            const result = await response.json();
-            const headers = result.values[0];
-            
-            const emailSelect = document.getElementById('emailCol');
-            const nameSelect = document.getElementById('nameCol');
-            
-            [emailSelect, nameSelect].forEach(s => s.innerHTML = '');
-            headers.forEach((h, index) => {
-                const opt = `<option value="${index}">${h}</option>`;
-                emailSelect.innerHTML += opt;
-                nameSelect.innerHTML += opt;
+            const res = await resp.json();
+            columnHeaders = res.values[0];
+
+            const sel = document.getElementById('emailCol');
+            const tags = document.getElementById('dynamic-tags');
+            sel.innerHTML = ''; tags.innerHTML = '';
+
+            columnHeaders.forEach((h, i) => {
+                const opt = document.createElement('option');
+                opt.value = i; opt.innerText = h;
+                sel.appendChild(opt);
+                if(h.toLowerCase().includes('email')) sel.value = i;
+
+                const btn = document.createElement('button');
+                btn.className = 'tag-btn';
+                btn.innerText = h;
+                btn.onclick = () => { quill.insertText(quill.getSelection()?.index || 0, `{{${h}}}`); updatePreview(); };
+                tags.appendChild(btn);
             });
 
-            document.getElementById('mapping-area').classList.remove('hidden', 'animate-pulse');
+            document.getElementById('mapping-box').classList.remove('hidden');
+
+            // Megpróbáljuk betölteni a korábbi mentést
+            const url = document.getElementById('script_url_input').value;
+            if (url) {
+                const loadResp = await fetch(`${url}?sheetId=${id}`);
+                const config = await loadResp.json();
+                if (config.found) {
+                    document.getElementById('subject').value = config.subject;
+                    quill.root.innerHTML = config.body;
+                    document.getElementById('emailCol').value = config.emailCol;
+                    document.getElementById('bgColor').value = config.bgColor;
+                    selectedFileId = config.fileId;
+                    updatePreview();
+                }
+            }
         }
 
-        function insertVar(v) {
-            const range = quill.getSelection();
-            quill.insertText(range ? range.index : quill.getLength(), v);
+        async function saveEverything() {
+            const url = document.getElementById('script_url_input').value;
+            if (!url) return alert("Hiba: Előbb add meg az Apps Script URL-t!");
+            
+            const payload = {
+                action: 'SAVE',
+                sheetId: targetSheetId,
+                subject: document.getElementById('subject').value,
+                body: quill.root.innerHTML,
+                emailCol: document.getElementById('emailCol').value,
+                bgColor: document.getElementById('bgColor').value,
+                fileId: selectedFileId,
+                headers: columnHeaders
+            };
+            await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            alert("Rendszer élesítve!");
+        }
+
+        async function sendTest() {
+            const url = document.getElementById('script_url_input').value;
+            const payload = {
+                action: 'TEST',
+                subject: document.getElementById('subject').value,
+                body: quill.root.innerHTML,
+                bgColor: document.getElementById('bgColor').value,
+                fileId: selectedFileId
+            };
+            await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            alert("Teszt email elküldve!");
         }
 
         function pickFile() {
             gapi.load('picker', () => {
-                new google.picker.PickerBuilder()
-                    .addView(google.picker.ViewId.DOCS)
-                    .setOAuthToken(accessToken).setDeveloperKey(CONFIG.API_KEY)
-                    .setCallback((data) => {
-                        if (data.action === google.picker.Action.PICKED) {
-                            selectedFileId = data.docs[0].id;
-                            alert("Fájl csatolva: " + data.docs[0].name);
-                        }
-                    }).build().setVisible(true);
+                new google.picker.PickerBuilder().addView(google.picker.ViewId.DOCS).setOAuthToken(accessToken).setDeveloperKey(API_KEY)
+                .setCallback((data) => { if (data.action === google.picker.Action.PICKED) selectedFileId = data.docs[0].id; }).build().setVisible(true);
             });
-        }
-
-        async function saveEverything() {
-            if (!targetSheetId) return alert("Hiba: Nincs táblázat.");
-            const btn = document.getElementById('deployBtn');
-            btn.innerText = "FOLYAMATBAN...";
-
-            const payload = {
-                sheetId: targetSheetId,
-                subject: document.getElementById('subject').value,
-                body: quill.root.innerHTML,
-                bgColor: document.getElementById('bgColor').value,
-                fileId: selectedFileId,
-                emailCol: document.getElementById('emailCol').value,
-                nameCol: document.getElementById('nameCol').value
-            };
-
-            await fetch(CONFIG.WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            btn.innerText = "ÉLESÍTVE ✓";
-            setTimeout(() => btn.innerText = "KONFIGURÁCIÓ ÉLESÍTÉSE & TRIGGER", 3000);
         }
     </script>
 </body>
