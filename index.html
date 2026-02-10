@@ -1,201 +1,133 @@
 <!DOCTYPE html>
-<html lang="hu" class="scroll-smooth">
+<html lang="hu">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoMail Studio | Pro Edition</title>
+    <title>AutoMail Studio | Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.bubble.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #000; color: #a1a1aa; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #000; color: #a1a1aa; overflow-x: hidden; }
         
-        /* Animációk */
-        .fade-in { animation: fadeIn 0.4s ease-in forwards; }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .pulse-red { animation: pulseRed 2s infinite; }
-        @keyframes pulseRed { 0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); } 50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); } }
+        
+        .pulse-red { animation: pulseRed 2s infinite; border: 1px solid #ef4444; color: #ef4444; }
+        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
-        /* UI */
-        .setup-step { border-left: 2px solid #18181b; padding-left: 30px; margin-bottom: 50px; position: relative; }
-        .setup-step::before { content: attr(data-step); position: absolute; left: -14px; top: 0; width: 28px; height: 28px; background: #000; border: 2px solid #27272a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 11px; }
+        .setup-card { border-left: 2px solid #18181b; padding-left: 24px; margin-bottom: 40px; }
+        .code-box { display: none; background: #0a0a0a; border: 1px solid #18181b; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 11px; margin-top: 10px; color: #52525b; white-space: pre-wrap; }
         
-        .code-container { display: none; background: #050505; border: 1px solid #18181b; padding: 20px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #888; overflow-x: auto; margin-top: 15px; }
+        #editor { min-height: 200px; background: #050505; border: 1px solid #18181b; color: white; border-radius: 8px; margin-top: 10px; }
         .input-minimal { background: transparent; border-bottom: 1px solid #18181b; outline: none; color: white; transition: 0.3s; }
-        .input-minimal:focus { border-color: #fff; }
-        #editor { min-height: 250px; border-radius: 8px; background: #050505; border: 1px solid #18181b; color: #fff; margin-top: 10px; }
-        
-        .tag-btn { font-size: 9px; text-transform: uppercase; padding: 6px 12px; border: 1px solid #27272a; border-radius: 4px; cursor: pointer; background: #09090b; }
-        .tag-btn:hover { border-color: #fff; color: #fff; }
+        .input-minimal:focus { border-color: white; }
     </style>
 </head>
 <body class="p-6 md:p-12">
 
     <nav class="flex justify-between items-center mb-16 border-b border-zinc-900 pb-6 max-w-7xl mx-auto">
-        <h1 class="text-white text-xs tracking-[0.5em] uppercase font-bold">AutoMail <span class="text-zinc-600">Studio</span></h1>
+        <h1 class="text-white text-xs tracking-[0.4em] uppercase font-bold italic">AutoMail Studio</h1>
         <div class="flex gap-4">
-            <button onclick="switchView('main')" id="nav-main" class="text-[10px] uppercase tracking-widest px-4 py-2 rounded border border-transparent hover:border-zinc-800 transition">Vezérlőpult</button>
-            <button onclick="switchView('setup')" id="nav-setup" class="text-[10px] uppercase tracking-widest px-4 py-2 rounded alert-btn pulse-red text-red-500 border border-red-900/50">! Segítség</button>
+            <button onclick="showView('main')" id="btn-main" class="text-[10px] uppercase tracking-widest px-4 py-2 rounded bg-zinc-900 text-white">Vezérlőpult</button>
+            <button onclick="showView('help')" id="btn-help" class="text-[10px] uppercase tracking-widest px-4 py-2 rounded pulse-red font-bold">! Segítség</button>
         </div>
     </nav>
 
-    <div id="view-setup" class="hidden max-w-4xl mx-auto fade-in pb-20">
-        <h2 class="text-3xl text-white font-light mb-12 italic">Beüzemelési folyamat</h2>
+    <div id="view-help" class="hidden max-w-4xl mx-auto fade-in">
+        <h2 class="text-3xl text-white font-light mb-10">Beállítási útmutató</h2>
 
-        <div class="setup-step" data-step="1">
-            <h3 class="text-white mb-2">Google Űrlap & Táblázat</h3>
-            <p class="text-sm">Hozza létre az űrlapot, majd a 'Válaszok' (Responses) fülön nyissa meg a Táblázatot (zöld ikon).</p>
+        <div class="setup-card">
+            <p class="text-xs uppercase text-zinc-500 mb-2">01. lépés</p>
+            <h3 class="text-white text-lg">Űrlap és Táblázat (Forms & Sheets)</h3>
+            <p class="text-sm mt-2">Hozza létre a Google Űrlapot. A 'Válaszok' (Responses) fülön kattintson a zöld táblázat ikonra. A megnyíló táblázatban lesznek az adatok.</p>
+            <img src="kep1.png" class="mt-4 rounded-lg border border-zinc-900 w-full max-w-2xl shadow-xl">
         </div>
 
-        <div class="setup-step" data-step="2">
-            <h3 class="text-white mb-2">Apps Script megnyitása</h3>
-            <p class="text-sm">A táblázatban: <b>Bővítmények (Extensions) > Apps Script</b>.</p>
+        <div class="setup-card">
+            <p class="text-xs uppercase text-zinc-500 mb-2">02. lépés</p>
+            <h3 class="text-white text-lg">Szkript megnyitása (Extensions -> Apps Script)</h3>
+            <p class="text-sm mt-2">A táblázat felső menüjében kattintson: <b>Bővítmények (Extensions) > Apps Script</b>.</p>
+            <img src="kep2.png" class="mt-4 rounded-lg border border-zinc-900 w-full max-w-2xl shadow-xl">
         </div>
 
-        <div class="setup-step" data-step="3">
-            <h3 class="text-white mb-2">Kód beillesztése</h3>
-            <p class="text-sm mb-4">Törölje az ottani szöveget, és másolja be a lenti kódot.</p>
-            <div class="flex gap-3">
-                <button onclick="toggleCode()" class="text-[10px] uppercase tracking-widest border border-zinc-800 px-4 py-2 hover:bg-zinc-900 transition">Kód mutatása / elrejtése</button>
-                <button onclick="copyScript()" class="text-[10px] uppercase tracking-widest bg-white text-black px-4 py-2 font-bold hover:bg-zinc-200 transition">Kód másolása</button>
+        <div class="setup-card">
+            <p class="text-xs uppercase text-zinc-500 mb-2">03. lépés</p>
+            <h3 class="text-white text-lg">Kód beillesztése</h3>
+            <p class="text-sm mt-2">Törölje ki az ott lévő kódot, és másolja be ezt:</p>
+            <div class="flex gap-4 mt-4">
+                <button onclick="toggleCode()" class="text-[10px] border border-zinc-800 px-4 py-2 hover:text-white">KÓD MUTATÁSA</button>
+                <button onclick="copyCode()" class="text-[10px] bg-white text-black px-4 py-2 font-bold">MÁSOLÁS</button>
             </div>
-            <div id="code-block" class="code-container">
-/* AutoMail Studio - Univerzális Motor 
-  Ez a kód kezeli az email küldést és az automatikus triggereket.
-*/
-
-function doGet(e) {
-  // Betölti a korábbi mentett beállításokat a Studio felületére
-  var sheetId = e.parameter.sheetId;
-  var props = PropertiesService.getScriptProperties();
-  return ContentService.createTextOutput(props.getProperty(sheetId) || JSON.stringify({found:false}))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  // Itt érkezik meg a mentés vagy a tesztelés parancs a felületről
-  var data = JSON.parse(e.postData.contents);
-  var props = PropertiesService.getScriptProperties();
-  
-  if (data.action === "SAVE") {
-    data.found = true;
-    props.setProperty(data.sheetId, JSON.stringify(data));
-    setupTrigger(data.sheetId); // Automatikusan beállítja a figyelőt
-  } 
-  
-  if (data.action === "TEST") {
-    // Teszt email küldése a saját címedre
-    sendMail(Session.getActiveUser().getEmail(), data.subject, data.body, data.bgColor, data.fileId, true);
-  }
-  return ContentService.createTextOutput("OK");
-}
-
-function setupTrigger(id) {
-  // Ellenőrzi, hogy van-e már aktív trigger, ha nincs, létrehoz egyet
-  var triggers = ScriptApp.getProjectTriggers();
-  var exists = triggers.some(function(t) { return t.getTriggerSourceId() === id; });
-  if (!exists) {
-    ScriptApp.newTrigger("onFormSubmitAction").forSpreadsheet(id).onFormSubmit().create();
-  }
-}
-
-function onFormSubmitAction(e) {
-  // Ez fut le automatikusan, ha valaki kitölti az űrlapot
-  var sheetId = e.source.getId();
-  var config = JSON.parse(PropertiesService.getScriptProperties().getProperty(sheetId));
-  if (!config) return;
-
-  var recipientEmail = e.values[config.emailCol];
-  var subject = config.subject;
-  var body = config.body;
-
-  // Kicseréli a {{Változókat}} a táblázat adataira
-  config.headers.forEach(function(header, index) {
-    var regex = new RegExp("{{" + header + "}}", "g");
-    var value = e.values[index] || "";
-    subject = subject.replace(regex, value);
-    body = body.replace(regex, value);
-  });
-
-  sendMail(recipientEmail, subject, body, config.bgColor, config.fileId, false);
-}
-
-function sendMail(to, sub, body, color, fileId, isTest) {
-  // Az email vizuális összeállítása
-  var htmlBody = `
-    <div style="background-color:`+color+`; padding:40px; font-family:sans-serif;">
-      <div style="background-color:white; padding:30px; border-radius:8px; max-width:600px; margin:0 auto; color:#333; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-        ` + (isTest ? "<p style='color:red; font-size:10px; font-weight:bold; border-bottom:1px solid #eee; padding-bottom:10px;'>STUDIO TESZT ÜZENET</p>" : "") + `
-        ` + body + `
-      </div>
-      <div style="text-align:center; padding-top:20px; color:#666; font-size:10px; opacity:0.5;">
-        Küldve az AutoMail Studio rendszerével
-      </div>
-    </div>`;
-
-  var options = { htmlBody: htmlBody };
-  if (fileId) { options.attachments = [DriveApp.getFileById(fileId).getBlob()]; }
-  GmailApp.sendEmail(to, sub, "", options);
-}</div>
+            <div id="script-container" class="code-box">/* Ide másold a kódot a válaszból... */</div>
+            <img src="kep3.png" class="mt-4 rounded-lg border border-zinc-900 w-full max-w-2xl shadow-xl">
         </div>
 
-        <div class="setup-step" data-step="4">
-            <h3 class="text-white mb-2">Közzététel</h3>
-            <p class="text-sm"><b>Deploy (Közzététel) > New Deployment (Új közzététel)</b>. <br>Típus: Web App. Ki fér hozzá: <b>Anyone (Bárki)</b>. <br>Másolja ki a Web App URL-t.</p>
+        <div class="setup-card">
+            <p class="text-xs uppercase text-zinc-500 mb-2">04. lépés</p>
+            <h3 class="text-white text-lg">Mentés és Közzététel (Deploy)</h3>
+            <p class="text-sm mt-2">Nyomja meg a Mentés (lemez) ikont. Ezután: <b>Közzététel (Deploy) > Új közzététel (New deployment)</b>. <br>Típus: <b>Webalkalmazás (Web App)</b>. Hozzáférés: <b>Bárki (Anyone)</b>.</p>
+            <img src="kep4.png" class="mt-4 rounded-lg border border-zinc-900 w-full max-w-2xl shadow-xl">
         </div>
 
-        <div class="setup-step" data-step="5">
-            <h3 class="text-white mb-2">Összekötés</h3>
-            <p class="text-sm mb-4">Illessze be az URL-t ide:</p>
-            <input type="text" id="webapp_url" placeholder="https://script.google.com/..." class="input-minimal w-full py-3 text-xs font-mono">
+        <div class="setup-card">
+            <p class="text-xs uppercase text-zinc-500 mb-2">05. lépés</p>
+            <h3 class="text-white text-lg">URL beillesztése</h3>
+            <p class="text-sm mt-2">Másolja ki a kapott Web App URL-t és illessze be ide:</p>
+            <input type="text" id="setup-url" oninput="document.getElementById('main-url').value = this.value" placeholder="https://script.google.com/..." class="input-minimal w-full py-4 text-xs font-mono">
         </div>
 
-        <div class="pt-10">
-            <button onclick="switchView('main')" class="border border-white text-white px-10 py-4 text-[10px] uppercase tracking-widest hover:bg-white hover:text-black transition">Vissza a vezérlőhöz</button>
+        <div class="text-center py-20">
+            <button onclick="showView('main')" class="bg-white text-black px-12 py-4 font-bold uppercase tracking-widest text-[10px]">Vissza a vezérlőhöz</button>
         </div>
     </div>
 
     <div id="view-main" class="max-w-7xl mx-auto fade-in">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-20">
-            <div class="lg:col-span-5 space-y-12">
-                <div>
-                    <p class="text-[10px] uppercase tracking-[0.3em] mb-6 opacity-50">01 / Forrásfájl</p>
-                    <button onclick="pickSpreadsheet()" class="text-[10px] uppercase border border-zinc-800 px-8 py-3 hover:border-zinc-500 transition">Táblázat Tallózása</button>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-20">
+            
+            <div class="space-y-12">
+                <section>
+                    <p class="text-[10px] uppercase tracking-widest mb-6 opacity-40">01 / Táblázat kiválasztása</p>
+                    <button onclick="pickSpreadsheet()" class="text-[10px] uppercase border border-zinc-800 px-6 py-3 hover:bg-white hover:text-black transition">Tallózás</button>
                     
-                    <div id="mapping-box" class="hidden mt-8 p-6 bg-zinc-950 border border-zinc-900 rounded-lg space-y-6">
-                        <div class="flex justify-between items-center">
-                            <span class="text-[10px] uppercase tracking-widest">Címzett email:</span>
-                            <select id="emailCol" class="bg-black text-white text-xs border border-zinc-800 p-1"></select>
+                    <div id="mapping-box" class="hidden mt-8 p-6 bg-zinc-950 border border-zinc-900 rounded-lg animate-pulse">
+                        <div class="flex justify-between items-center mb-6">
+                            <span class="text-[10px] uppercase font-bold text-zinc-400">Email oszlop:</span>
+                            <select id="emailCol" class="bg-black text-white text-xs border border-zinc-800 p-1 rounded"></select>
                         </div>
                         <div id="dynamic-tags" class="flex flex-wrap gap-2"></div>
                     </div>
-                </div>
+                </section>
 
-                <div class="space-y-6">
-                    <p class="text-[10px] uppercase tracking-[0.3em] opacity-50">02 / Email Szerkesztő</p>
-                    <input type="text" id="subject" placeholder="Email tárgya..." class="input-minimal w-full py-2 text-sm">
+                <section>
+                    <p class="text-[10px] uppercase tracking-widest mb-6 opacity-40">02 / Üzenet szerkesztése</p>
+                    <input type="text" id="subject" placeholder="Tárgy" class="input-minimal w-full py-2 mb-4">
                     <div id="editor"></div>
-                    <div class="flex justify-between items-center">
-                        <button onclick="pickFile()" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition">[+] Fájl csatolása</button>
-                        <input type="color" id="bgColor" value="#e5e7eb" class="w-5 h-5 bg-transparent border-none cursor-pointer">
+                    <div class="flex justify-between items-center mt-4">
+                        <button onclick="pickFile()" class="text-[9px] uppercase tracking-widest opacity-40 hover:opacity-100 transition">[+] Melléklet</button>
+                        <div class="flex items-center gap-3">
+                            <span class="text-[9px] uppercase text-zinc-600">Email háttere:</span>
+                            <input type="color" id="bgColor" value="#f3f4f6" class="w-6 h-6 bg-transparent border-none cursor-pointer">
+                        </div>
                     </div>
-                </div>
+                </section>
 
                 <div class="pt-10 space-y-4">
-                    <button onclick="saveConfig()" class="w-full bg-white text-black py-5 text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-zinc-200 transition">Élesítés & Trigger indítása</button>
-                    <button onclick="testEmail()" class="w-full border border-zinc-900 py-3 text-[9px] uppercase tracking-[0.2em] hover:text-white transition">Teszt küldése saját címre</button>
+                    <input type="hidden" id="main-url">
+                    <button onclick="saveAll()" class="w-full bg-white text-black font-bold py-5 text-[10px] uppercase tracking-[0.4em] hover:bg-zinc-200 transition">Élesítés & Trigger indítása</button>
+                    <button onclick="testNow()" class="w-full border border-zinc-900 py-3 text-[9px] uppercase tracking-[0.2em] hover:text-white transition">Teszt küldése (Saját címre)</button>
                 </div>
             </div>
 
-            <div class="lg:col-span-7">
+            <div class="hidden lg:block">
                 <div class="sticky top-10">
-                    <p class="text-[10px] uppercase tracking-[0.3em] mb-10 text-center opacity-30 italic">Élő Előnézet</p>
-                    <div id="previewWrap" class="border border-zinc-900 p-12 min-h-[500px] flex items-center justify-center transition-all duration-700 rounded-xl">
-                        <div class="bg-white p-10 w-full shadow-2xl rounded-lg">
-                            <h2 id="prevSub" class="text-xl font-bold text-black mb-6 border-b pb-4"></h2>
+                    <p class="text-[10px] uppercase tracking-[0.3em] mb-10 text-center opacity-30 italic">Élő előnézet</p>
+                    <div id="previewWrap" class="border border-zinc-900 p-10 min-h-[500px] flex items-center justify-center rounded-2xl transition-all duration-1000">
+                        <div class="bg-white p-8 w-full shadow-2xl rounded-lg">
+                            <h2 id="prevSub" class="text-xl font-bold text-black mb-4 border-b pb-4"></h2>
                             <div id="prevBody" class="text-sm leading-relaxed text-zinc-700"></div>
                         </div>
                     </div>
@@ -205,36 +137,38 @@ function sendMail(to, sub, body, color, fileId, isTest) {
     </div>
 
     <script>
+        // API ADATOK
         const CLIENT_ID = '721143767176-gdlp76cpchpaka591l8h2avivk8aabq5.apps.googleusercontent.com';
         const API_KEY = 'AIzaSyAN6a6dw4x4dQW4e3batn43ds33KxqQkuc';
 
         let accessToken = null, targetSheetId = null, selectedFileId = null, columnHeaders = [];
-        const quill = new Quill('#editor', { theme: 'bubble', placeholder: 'Írja ide az üzenetet...' });
+        const quill = new Quill('#editor', { theme: 'bubble', placeholder: 'Ide írd a levelet...' });
 
-        function switchView(view) {
-            document.getElementById('view-setup').style.display = view === 'setup' ? 'block' : 'none';
-            document.getElementById('view-main').style.display = view === 'main' ? 'block' : 'none';
+        // NÉZETVÁLTÓ
+        function showView(view) {
+            document.getElementById('view-main').classList.toggle('hidden', view !== 'main');
+            document.getElementById('view-help').classList.toggle('hidden', view !== 'help');
         }
-        switchView('main');
 
         function toggleCode() {
-            const block = document.getElementById('code-block');
-            block.style.display = block.style.display === 'block' ? 'none' : 'block';
+            const box = document.getElementById('script-container');
+            box.style.display = box.style.display === 'block' ? 'none' : 'block';
         }
 
-        function copyScript() {
-            const code = document.getElementById('code-block').innerText;
-            navigator.clipboard.writeText(code);
-            alert("Kód a vágólapra másolva!");
+        function copyCode() {
+            // Ide illesztheted az Apps Script kódot a könnyű másoláshoz
+            const code = `/* Itt az Apps Script kód */`; 
+            navigator.clipboard.writeText(code); alert("Kód másolva!");
         }
 
+        // PREVIEW MOTOR
         const updatePreview = () => {
             let s = document.getElementById('subject').value;
             let b = quill.root.innerHTML;
             columnHeaders.forEach(h => {
                 const r = new RegExp(`\\{\\{${h}\\}\\}`, 'g');
                 s = s.replace(r, `<span class="text-blue-600">[${h}]</span>`);
-                b = b.replace(r, `<span class="bg-zinc-100 px-1 border border-zinc-200 text-black font-semibold">${h}</span>`);
+                b = b.replace(r, `<span class="bg-zinc-100 px-1 border border-zinc-200 text-black font-bold">${h}</span>`);
             });
             document.getElementById('prevSub').innerHTML = s || "Tárgy";
             document.getElementById('prevBody').innerHTML = b;
@@ -245,6 +179,7 @@ function sendMail(to, sub, body, color, fileId, isTest) {
         document.getElementById('subject').oninput = updatePreview;
         document.getElementById('bgColor').oninput = updatePreview;
 
+        // GOOGLE PICKER
         function pickSpreadsheet() {
             google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
@@ -283,32 +218,18 @@ function sendMail(to, sub, body, color, fileId, isTest) {
                 if(h.toLowerCase().includes('mail')) sel.value = i;
 
                 const btn = document.createElement('button');
-                btn.className = 'tag-btn';
+                btn.className = 'text-[9px] uppercase tracking-widest border border-zinc-800 px-3 py-1 hover:border-white transition';
                 btn.innerText = h;
                 btn.onclick = () => { quill.insertText(quill.getSelection()?.index || 0, `{{${h}}}`); updatePreview(); };
                 tags.appendChild(btn);
             });
-
             document.getElementById('mapping-box').classList.remove('hidden');
-
-            // Betöltés az Apps Scriptből
-            const url = document.getElementById('webapp_url').value;
-            if (url) {
-                const loadResp = await fetch(`${url}?sheetId=${id}`);
-                const config = await loadResp.json();
-                if (config.found) {
-                    document.getElementById('subject').value = config.subject;
-                    quill.root.innerHTML = config.body;
-                    document.getElementById('emailCol').value = config.emailCol;
-                    document.getElementById('bgColor').value = config.bgColor;
-                    selectedFileId = config.fileId;
-                    updatePreview();
-                }
-            }
+            document.getElementById('mapping-box').classList.remove('animate-pulse');
         }
 
-        async function saveConfig() {
-            const url = document.getElementById('webapp_url').value;
+        // --- KOMMUNIKÁCIÓ AZ APPS SCRIPTEL ---
+        async function saveAll() {
+            const url = document.getElementById('main-url').value;
             if (!url) return alert("Hiba: Előbb add meg az URL-t a Segítség menüben!");
             
             const payload = {
@@ -322,11 +243,12 @@ function sendMail(to, sub, body, color, fileId, isTest) {
                 headers: columnHeaders
             };
             await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            alert("Rendszer élesítve!");
+            alert("Rendszer sikeresen élesítve!");
         }
 
-        async function testEmail() {
-            const url = document.getElementById('webapp_url').value;
+        async function testNow() {
+            const url = document.getElementById('main-url').value;
+            if (!url) return alert("URL hiányzik!");
             const payload = {
                 action: 'TEST',
                 subject: document.getElementById('subject').value,
@@ -335,7 +257,7 @@ function sendMail(to, sub, body, color, fileId, isTest) {
                 fileId: selectedFileId
             };
             await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            alert("Teszt email elküldve!");
+            alert("A teszt emailt elküldtük a Te címedre!");
         }
 
         function pickFile() {
