@@ -3,139 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Email Automator & Designer</title>
-    
+    <title>AutoMail Control Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://apis.google.com/js/api.js"></script>
-
     <style>
-        #editor { height: 350px; border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
-        .ql-toolbar { border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; background: #f9fafb; }
-        #preview-area { transition: all 0.3s ease; }
+        #editor { height: 300px; }
+        .hidden-ui { display: none; }
     </style>
 </head>
-<body class="bg-gray-100 font-sans antialiased">
+<body class="bg-slate-900 text-slate-200 font-sans">
 
-    <div class="min-h-screen flex flex-col">
-        <header class="bg-indigo-700 text-white p-4 shadow-lg flex justify-between items-center px-6 md:px-12">
-            <h1 class="text-xl font-bold tracking-tight">Email <span class="font-light text-indigo-200">Automator</span></h1>
-            <div id="auth-section">
-                <button id="loginBtn" onclick="handleAuthClick()" class="bg-white text-indigo-700 px-5 py-2 rounded-full font-bold text-sm hover:bg-indigo-50 transition shadow-md">
-                    Bejelentkezés Google-lel
-                </button>
-                <span id="userEmail" class="hidden text-sm font-medium bg-indigo-800 px-4 py-2 rounded-full"></span>
+    <div id="login-wall" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900">
+        <div class="text-center p-10 bg-slate-800 rounded-3xl shadow-2xl border border-slate-700">
+            <h1 class="text-4xl font-black mb-6 text-white tracking-tight">AutoMail <span class="text-indigo-500">Pro</span></h1>
+            <p class="mb-8 text-slate-400">A folytatáshoz azonosítsa magát Google fiókjával.</p>
+            <button onclick="handleAuthClick()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg transition-all transform hover:scale-105">
+                Bejelentkezés Google-lel
+            </button>
+        </div>
+    </div>
+
+    <div id="main-ui" class="hidden-ui min-h-screen flex flex-col">
+        <header class="p-4 bg-slate-800 border-b border-slate-700 flex justify-between items-center px-8">
+            <div class="flex items-center gap-4">
+                <span class="text-indigo-400 font-bold">AutoMail v2.0</span>
+                <span id="statusBadge" class="text-xs bg-green-900 text-green-300 px-3 py-1 rounded-full border border-green-700 font-bold uppercase">Online</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="userNameDisplay" class="text-sm font-medium"></span>
+                <button onclick="location.reload()" class="text-xs text-slate-500 hover:text-white">Kijelentkezés</button>
             </div>
         </header>
 
-        <main class="flex-grow grid grid-cols-1 lg:grid-cols-12 gap-0">
-            
-            <div class="lg:col-span-5 bg-white p-6 border-r border-gray-200 overflow-y-auto max-h-[calc(100vh-64px)]">
-                <section class="space-y-6">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">1. Email Tárgya</label>
-                        <input type="text" id="subject" placeholder="Pl: Szia {{Nev}}, köszöntünk nálunk!" 
-                               class="w-full border-gray-300 border p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                    </div>
+        <div class="flex-grow grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+            <div class="lg:col-span-5 p-6 bg-slate-800/50 overflow-y-auto custom-scrollbar border-r border-slate-700">
+                <div class="space-y-6">
+                    
+                    <section class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                        <label class="block text-xs font-bold text-indigo-400 uppercase mb-3">1. Cél Táblázat (Spreadsheet ID)</label>
+                        <input type="text" id="sheetId" placeholder="Másold be a táblázatod ID-ját..." 
+                               class="w-full bg-slate-900 border-slate-700 border p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+                        <p class="text-[10px] text-slate-500 mt-2 italic">A táblázat URL-jéből a /d/ és /edit közötti rész.</p>
+                    </section>
 
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">2. Üzenet tartalom (Vizuális)</label>
-                        <div id="editor"></div>
-                        <p class="text-xs text-gray-400 mt-2 italic">Használhatod a {{Nev}} változót a szövegben.</p>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">3. Háttérszín</label>
-                            <input type="color" id="bgColor" value="#f3f4f6" class="w-full h-12 rounded-lg cursor-pointer border border-gray-200">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">4. Csatolmány</label>
-                            <button id="pickerBtn" onclick="createPicker()" disabled 
-                                    class="w-full h-12 bg-gray-100 text-gray-400 rounded-lg font-bold text-sm cursor-not-allowed border-2 border-dashed border-gray-300 hover:bg-gray-200 transition">
-                                Tallózás a Drive-ból
-                            </button>
-                            <div id="fileStatus" class="text-xs mt-1 text-green-600 font-bold"></div>
-                        </div>
-                    </div>
-
-                    <button id="saveBtn" onclick="saveToAppsScript()" class="w-full bg-green-500 hover:bg-green-600 text-white font-extrabold py-4 rounded-xl shadow-lg transform hover:scale-[1.02] transition-all">
-                        BEÁLLÍTÁSOK AKTIVÁLÁSA
-                    </button>
-                </section>
-            </div>
-
-            <div id="preview-area" class="lg:col-span-7 bg-gray-200 flex items-center justify-center p-4 md:p-12 overflow-y-auto max-h-[calc(100vh-64px)]">
-                <div class="w-full max-w-2xl">
-                    <p class="text-center text-gray-500 text-xs font-bold mb-4 uppercase tracking-widest italic">Élő előnézet</p>
-                    <div id="emailBg" class="shadow-2xl rounded-lg overflow-hidden min-h-[500px]">
-                        <div class="bg-white m-8 p-10 rounded shadow-sm border border-gray-100">
-                            <h2 id="prevSub" class="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">Tárgy helye...</h2>
-                            <div id="prevBody" class="prose max-w-none text-gray-700">
-                                Az üzeneted itt fog megjelenni formázva...
+                    <section class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                        <label class="block text-xs font-bold text-indigo-400 uppercase mb-3">2. Oszlopok (A=0, B=1, C=2...)</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <span class="text-[10px] text-slate-500 uppercase">Email oszlop</span>
+                                <input type="number" id="emailCol" value="2" class="w-full bg-slate-900 border-slate-700 border p-2 rounded text-center">
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-500 uppercase">Név oszlop</span>
+                                <input type="number" id="nameCol" value="1" class="w-full bg-slate-900 border-slate-700 border p-2 rounded text-center">
                             </div>
                         </div>
+                    </section>
+
+                    <section class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                        <label class="block text-xs font-bold text-indigo-400 uppercase mb-3">3. Email Szerkesztő</label>
+                        <input type="text" id="subject" placeholder="Tárgy {{Nev}}..." class="w-full bg-slate-900 border-slate-700 border p-3 rounded-lg mb-4 text-sm outline-none focus:border-indigo-500">
+                        
+                        <div class="mb-2 flex gap-2">
+                            <button onclick="insertVar('{{Nev}}')" class="bg-slate-700 hover:bg-slate-600 text-[10px] px-3 py-1 rounded-full">+ NÉV TAG</button>
+                            <button onclick="insertVar('{{Datum}}')" class="bg-slate-700 hover:bg-slate-600 text-[10px] px-3 py-1 rounded-full">+ DÁTUM TAG</button>
+                        </div>
+
+                        <div id="editor" class="bg-white text-slate-900 rounded-b-lg"></div>
+                    </section>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="createPicker()" id="pickerBtn" class="h-14 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold text-sm shadow-lg transition">
+                            📁 Drive Fájl
+                        </button>
+                        <input type="color" id="bgColor" value="#1e293b" class="w-full h-14 bg-slate-800 rounded-xl cursor-pointer border-2 border-slate-700">
+                    </div>
+                    <p id="fileInfo" class="text-center text-xs text-green-400 font-bold"></p>
+
+                    <button onclick="saveEverything()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-xl transition-all transform hover:-translate-y-1 uppercase tracking-widest">
+                        Rendszer Aktiválása
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-7 bg-slate-900 p-8 flex flex-col items-center justify-start overflow-y-auto">
+                <p class="text-xs font-bold text-slate-600 uppercase mb-8 tracking-widest text-center italic">Valós idejű email előnézet</p>
+                
+                <div id="emailPreviewFrame" class="w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl transition-all duration-500" style="background-color: #1e293b; padding: 40px;">
+                    <div class="bg-white p-8 rounded-lg shadow-inner">
+                        <h2 id="prevSub" class="text-2xl font-black text-slate-800 mb-6 border-b pb-4"></h2>
+                        <div id="prevBody" class="prose max-w-none text-slate-700 min-h-[200px]"></div>
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 
     <script>
-        // --- KONFIGURÁCIÓ (Töltsd ki!) ---
         const CONFIG = {
-            CLIENT_ID: 'A_TE_CLIENT_ID_Helye.apps.googleusercontent.com',
-            API_KEY: 'A_TE_API_KEY_Helye',
-            APP_ID: 'A_PROJEKTED_SZAMA_A_CLOUD_CONSOLBAN', // Pl: 123456789
-            WEB_APP_URL: 'A_TE_APPS_SCRIPT_WEBAPP_URL_ED'
+            CLIENT_ID: '721143767176-gdlp76cpchpaka591l8h2avivk8aabq5.apps.googleusercontent.com',
+            API_KEY: 'IDE_ÍRD_AZ_API_KULCSODAT' // Ez kell a Picker-hez a Cloud Console-ból
         };
 
         let accessToken = null;
         let selectedFileId = null;
 
-        // 1. Szerkesztő inicializálása
         const quill = new Quill('#editor', {
             theme: 'snow',
-            modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'color': [] }, { 'background': [] }], [{ 'align': [] }], ['clean']] }
+            modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'color': [] }], ['clean']] }
         });
 
-        // 2. Élő előnézet frissítése
-        const updatePreview = () => {
-            document.getElementById('prevSub').innerText = document.getElementById('subject').value || "Nincs tárgy megadva";
+        // Élő frissítés
+        const update = () => {
+            document.getElementById('prevSub').innerText = document.getElementById('subject').value || "Tárgy helye...";
             document.getElementById('prevBody').innerHTML = quill.root.innerHTML;
-            document.getElementById('emailBg').style.backgroundColor = document.getElementById('bgColor').value;
+            document.getElementById('emailPreviewFrame').style.backgroundColor = document.getElementById('bgColor').value;
         };
+        quill.on('text-change', update);
+        document.getElementById('subject').oninput = update;
+        document.getElementById('bgColor').oninput = update;
 
-        quill.on('text-change', updatePreview);
-        document.getElementById('subject').addEventListener('input', updatePreview);
-        document.getElementById('bgColor').addEventListener('input', updatePreview);
+        function insertVar(v) {
+            const range = quill.getSelection();
+            if (range) quill.insertText(range.index, v);
+        }
 
-        // 3. Google Bejelentkezés
+        // GOOGLE AUTH
         function handleAuthClick() {
             const client = google.accounts.oauth2.initTokenClient({
                 client_id: CONFIG.CLIENT_ID,
-                scope: 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets',
+                scope: 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/script.deployments',
                 callback: (response) => {
                     if (response.access_token) {
                         accessToken = response.access_token;
-                        document.getElementById('loginBtn').classList.add('hidden');
-                        document.getElementById('userEmail').classList.remove('hidden');
-                        document.getElementById('userEmail').innerText = "Bejelentkezve ✓";
-                        
-                        const pBtn = document.getElementById('pickerBtn');
-                        pBtn.disabled = false;
-                        pBtn.classList.replace('bg-gray-100', 'bg-indigo-100');
-                        pBtn.classList.replace('text-gray-400', 'text-indigo-700');
-                        pBtn.classList.replace('cursor-not-allowed', 'cursor-pointer');
+                        document.getElementById('login-wall').style.display = 'none';
+                        document.getElementById('main-ui').classList.remove('hidden-ui');
                     }
                 },
             });
             client.requestAccessToken();
         }
 
-        // 4. Drive Picker (Fájlválasztó)
+        // DRIVE PICKER
         function createPicker() {
             gapi.load('picker', () => {
                 const picker = new google.picker.PickerBuilder()
@@ -144,9 +156,8 @@
                     .setDeveloperKey(CONFIG.API_KEY)
                     .setCallback((data) => {
                         if (data.action === google.picker.Action.PICKED) {
-                            const doc = data.docs[0];
-                            selectedFileId = doc.id;
-                            document.getElementById('fileStatus').innerText = "Kiválasztva: " + doc.name;
+                            selectedFileId = data.docs[0].id;
+                            document.getElementById('fileInfo').innerText = "Kiválasztva: " + data.docs[0].name;
                         }
                     })
                     .build();
@@ -154,32 +165,22 @@
             });
         }
 
-        // 5. Mentés az Apps Scriptbe
-        async function saveToAppsScript() {
-            if (!accessToken) return alert("Kérlek, előbb jelentkezz be!");
-            if (!selectedFileId) return alert("Válassz ki egy fájlt a Drive-ból!");
-
+        async function saveEverything() {
             const payload = {
+                sheetId: document.getElementById('sheetId').value,
                 subject: document.getElementById('subject').value,
                 body: quill.root.innerHTML,
                 bgColor: document.getElementById('bgColor').value,
-                fileId: selectedFileId
+                fileId: selectedFileId,
+                emailCol: document.getElementById('emailCol').value,
+                nameCol: document.getElementById('nameCol').value
             };
 
-            try {
-                // Megjegyzés: A doPost hívás néha CORS hibát dobhat, ha nem jól van beállítva az Apps Script
-                const response = await fetch(CONFIG.WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', // Apps Script Web Appnál ez gyakran szükséges
-                    body: JSON.stringify(payload),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                
-                alert("Sikeresen elküldve a táblázatba! Mostantól az új kitöltők ezt a sablont kapják meg.");
-            } catch (err) {
-                console.error(err);
-                alert("Hiba történt a mentés során. Ellenőrizd a Web App URL-t!");
-            }
+            // Itt küldjük az Apps Scriptnek
+            alert("Minden adat készen áll! Küldés folyamatban a táblázatba...");
+            console.log("Mentendő adatok:", payload);
+            
+            // fetch call to Apps Script goes here
         }
     </script>
 </body>
